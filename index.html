@@ -1,0 +1,2319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elite Nation</title>
+
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+    </script>
+
+    <style>
+        /* ── same styles as before ── */
+        :root {
+            --bg: #0a0e17;
+            --card: #111827;
+            --accent: #f7931a;
+            --accent2: #3b82f6;
+            --gold: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --border: #1e293b;
+            --input: #1a1f2e;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            --radius: 14px;
+            --toast-bg: #1e293b;
+            --modal-bg: #111827;
+            --scrollbar: #1e293b;
+        }
+
+        [data-theme="light"] {
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+            --text2: #475569;
+            --border: #e2e8f0;
+            --input: #f8fafc;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --toast-bg: #ffffff;
+            --modal-bg: #ffffff;
+            --scrollbar: #cbd5e1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+            background-image: radial-gradient(ellipse at top, #1a1f3508 0%, transparent 60%),
+                radial-gradient(ellipse at bottom right, #f7931a08 0%, transparent 50%);
+        }
+
+        [data-theme="light"] body {
+            background-image: radial-gradient(ellipse at top, #f1f5f9 0%, transparent 60%),
+                radial-gradient(ellipse at bottom right, #f7931a08 0%, transparent 50%);
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            background: var(--bg);
+            box-shadow: var(--shadow);
+            transition: background 0.3s;
+        }
+
+        @media(min-width:768px) {
+            .app-container {
+                max-width: 500px;
+                border-left: 1px solid var(--border);
+                border-right: 1px solid var(--border);
+            }
+        }
+
+        .screen {
+            display: none;
+            padding: 20px 16px;
+            min-height: 100vh;
+            animation: fadeIn .35s ease;
+        }
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #f7931a, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .logo-sub {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text2);
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 12px #00000020;
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .card h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            transition: all .2s;
+            font-family: inherit;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px #f7931a20;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 13px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all .25s;
+            width: 100%;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #f7931a, #e67e0e);
+            color: #000;
+            box-shadow: 0 4px 14px #f7931a40;
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px #f7931a55;
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: #fff;
+            box-shadow: 0 4px 14px #3b82f640;
+        }
+        .btn-blue:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px #3b82f655;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text);
+        }
+        .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-sm {
+            padding: 8px 14px;
+            font-size: 0.78rem;
+            width: auto;
+            border-radius: 8px;
+        }
+        .btn-danger {
+            background: var(--red);
+            color: #fff;
+        }
+        .btn-success {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .badge-gold {
+            background: #f7931a20;
+            color: #f7931a;
+        }
+        .badge-green {
+            background: #10b98120;
+            color: #10b981;
+        }
+        .badge-red {
+            background: #ef444420;
+            color: #ef4444;
+        }
+        .badge-blue {
+            background: #3b82f620;
+            color: #3b82f6;
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .user-info-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #000;
+            font-size: 1.1rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .marquee-bar {
+            background: #f7931a15;
+            border: 1px solid #f7931a30;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            overflow: hidden;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            color: #f7931a;
+            letter-spacing: 0.5px;
+        }
+        .marquee-bar span {
+            display: inline-block;
+            animation: marquee 14s linear infinite;
+        }
+        @keyframes marquee {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .icon-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .2s;
+            font-size: 0.75rem;
+            color: var(--text2);
+        }
+        .icon-item:hover {
+            border-color: var(--accent);
+            color: var(--text);
+            transform: translateY(-2px);
+        }
+        .icon-item .ico {
+            font-size: 1.6rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .plan-card {
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all .25s;
+            text-align: center;
+            background: var(--card);
+        }
+        .plan-card:hover,
+        .plan-card.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px #f7931a25;
+        }
+        .plan-card h4 {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+        .plan-card .price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000cc;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn .2s;
+        }
+        .modal {
+            background: var(--modal-bg);
+            border-radius: var(--radius);
+            padding: 24px;
+            width: 90%;
+            max-width: 440px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            transition: background 0.3s;
+        }
+        .modal::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal::-webkit-scrollbar-track {
+            background: var(--scrollbar);
+        }
+        .modal::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+
+        .notification-badge {
+            position: relative;
+            cursor: pointer;
+            font-size: 1.4rem;
+        }
+        .notification-badge .count {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background: var(--red);
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .tab-nav button {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 0.78rem;
+            transition: all .2s;
+        }
+        .tab-nav button.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .chat-bubble {
+            padding: 10px 14px;
+            border-radius: 16px;
+            margin: 6px 0;
+            max-width: 80%;
+            font-size: 0.85rem;
+        }
+        .chat-bubble.user {
+            background: var(--accent2);
+            color: #fff;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.admin {
+            background: #1e293b;
+            color: var(--text);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        [data-theme="light"] .chat-bubble.admin {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .chat-image {
+            max-width: 200px;
+            border-radius: 10px;
+            cursor: zoom-in;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--toast-bg);
+            border: 1px solid var(--accent);
+            padding: 12px 20px;
+            border-radius: 30px;
+            z-index: 9999;
+            font-weight: 600;
+            font-size: 0.85rem;
+            animation: fadeIn .3s;
+            box-shadow: 0 8px 30px #00000060;
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            transform: rotate(15deg);
+        }
+
+        @media(max-width:480px) {
+            .icon-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+            .icon-item {
+                padding: 12px 6px;
+                font-size: 0.7rem;
+            }
+            .icon-item .ico {
+                font-size: 1.3rem;
+            }
+            .grid-2 {
+                gap: 6px;
+            }
+            .grid-3 {
+                gap: 4px;
+            }
+            .card {
+                padding: 14px;
+            }
+            .dashboard-header {
+                padding: 8px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container" id="appContainer"></div>
+    <div id="toastContainer"></div>
+    <div id="modalContainer"></div>
+    <audio id="notifSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
+    </audio>
+
+    <script>
+        // ============================================================
+        // 1. FIREBASE INIT – new config (fully configured)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBkzQMU2N_my7DYVvbjl2A0813LSoqpZeY",
+            authDomain: "elite-nation-12282.firebaseapp.com",
+            databaseURL: "https://elite-nation-12282-default-rtdb.firebaseio.com",
+            projectId: "elite-nation-12282",
+            storageBucket: "elite-nation-12282.firebasestorage.app",
+            messagingSenderId: "158135799550",
+            appId: "1:158135799550:web:46f6b592da2e514868dfaf"
+        };
+
+        let firebaseApp, firebaseDb;
+        let firebaseReady = false;
+
+        try {
+            if (typeof firebase !== 'undefined') {
+                firebaseApp = firebase.initializeApp(firebaseConfig);
+                firebaseDb = firebase.database();
+                firebaseReady = true;
+                console.log('🔥 Firebase initialized successfully (Elite Nation v2)');
+            } else {
+                console.warn('⚠️ Firebase SDK not loaded, using localStorage only');
+            }
+        } catch (e) {
+            console.warn('⚠️ Firebase init failed, using localStorage fallback:', e);
+            firebaseReady = false;
+        }
+
+        // ============================================================
+        // 2. DATA MANAGER – fast local-first, background Firebase sync
+        // ============================================================
+        const DataManager = {
+            _cache: {},
+            _initialized: false,
+            _listenerRef: null,
+
+            // Loads localStorage synchronously, then sets up Firebase listener in background
+            init() {
+                if (this._initialized) return;
+                this._loadFromLocalStorage();
+                this._initialized = true;
+
+                if (firebaseReady) {
+                    this._setupListener();
+                    console.log('📁 Firebase listener attached (background sync)');
+                } else {
+                    console.log('📁 Using localStorage only (no Firebase)');
+                }
+            },
+
+            _loadFromLocalStorage() {
+                const keys = ['users', 'pendingFee', 'pendingWithdrawals', 'approvedWithdrawals',
+                    'tasks', 'notifications', 'marqueeText', 'companyDocs', 'chatMessages',
+                    'subAdmins', 'paymentConfig', 'adminProfilePic', 'currentUserId'
+                ];
+                const data = {};
+                keys.forEach(k => {
+                    try {
+                        const raw = localStorage.getItem('en_' + k);
+                        data[k] = raw ? JSON.parse(raw) : null;
+                    } catch (e) { data[k] = null; }
+                });
+                const userTasks = {};
+                for (let key in localStorage) {
+                    if (key.startsWith('en_userTasks_')) {
+                        try {
+                            const uid = key.replace('en_userTasks_', '');
+                            userTasks[uid] = JSON.parse(localStorage.getItem(key));
+                        } catch (e) {}
+                    }
+                }
+                data.userTasks = userTasks;
+                this._cache = data;
+            },
+
+            _saveToLocalStorage(data) {
+                for (let key in data) {
+                    if (key === 'userTasks') {
+                        for (let uid in data.userTasks) {
+                            localStorage.setItem('en_userTasks_' + uid, JSON.stringify(data.userTasks[uid]));
+                        }
+                        continue;
+                    }
+                    localStorage.setItem('en_' + key, JSON.stringify(data[key]));
+                }
+            },
+
+            _setupListener() {
+                if (!firebaseReady) return;
+                if (this._listenerRef) {
+                    this._listenerRef.off();
+                }
+                const ref = firebaseDb.ref('/');
+                this._listenerRef = ref;
+                ref.on('value', (snapshot) => {
+                    const data = snapshot.val() || {};
+                    for (let key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            this._cache[key] = data[key];
+                        }
+                    }
+                    this._saveToLocalStorage(this._cache);
+                    if (this._onChangeCallback) {
+                        this._onChangeCallback(data);
+                    }
+                    console.log('🔄 Firebase sync update received');
+                }, (error) => {
+                    console.warn('⚠️ Firebase listener error:', error);
+                });
+            },
+
+            onChange(cb) {
+                this._onChangeCallback = cb;
+            },
+
+            get(key, def = null) {
+                const val = this._cache[key];
+                return val !== undefined ? val : def;
+            },
+
+            set(key, val) {
+                this._cache[key] = val;
+                if (key === 'userTasks') {
+                    for (let uid in val) {
+                        localStorage.setItem('en_userTasks_' + uid, JSON.stringify(val[uid]));
+                    }
+                } else {
+                    localStorage.setItem('en_' + key, JSON.stringify(val));
+                }
+                if (firebaseReady) {
+                    firebaseDb.ref('/' + key).set(val).catch(err => {
+                        console.warn('⚠️ Firebase write error for', key, err);
+                    });
+                }
+            },
+
+            remove(key) {
+                delete this._cache[key];
+                localStorage.removeItem('en_' + key);
+                if (firebaseReady) {
+                    firebaseDb.ref('/' + key).remove().catch(err => {
+                        console.warn('⚠️ Firebase remove error for', key, err);
+                    });
+                }
+            },
+
+            getUserTasks(userId) {
+                const all = this.get('userTasks', {});
+                return all[userId] || { completed: [], date: '' };
+            },
+
+            setUserTasks(userId, data) {
+                const all = this.get('userTasks', {});
+                all[userId] = data;
+                this.set('userTasks', all);
+            },
+
+            generateId() {
+                return String(Date.now()) + '-' + String(Math.floor(Math.random() * 10000));
+            }
+        };
+
+        // ============================================================
+        // 3. THEME MANAGER
+        // ============================================================
+        const ThemeManager = {
+            current: 'dark',
+
+            init() {
+                const saved = localStorage.getItem('en_theme') || 'dark';
+                this.current = saved;
+                this.apply(saved);
+            },
+
+            apply(theme) {
+                if (theme === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                }
+                this.current = theme;
+                localStorage.setItem('en_theme', theme);
+                const toggle = document.getElementById('themeToggleBtn');
+                if (toggle) {
+                    toggle.textContent = theme === 'light' ? '☀️' : '🌙';
+                }
+            },
+
+            toggle() {
+                const next = this.current === 'light' ? 'dark' : 'light';
+                this.apply(next);
+                if (window.APP && window.APP._refreshScreen) {
+                    window.APP._refreshScreen();
+                }
+            },
+
+            getIcon() {
+                return this.current === 'light' ? '☀️' : '🌙';
+            }
+        };
+
+        // ============================================================
+        // 4. MAIN APP
+        // ============================================================
+        const APP = (() => {
+
+            // ── STORE wrapper ──
+            const STORE = {
+                get(key, def) { return DataManager.get(key, def); },
+                set(key, val) { DataManager.set(key, val); },
+                remove(key) { DataManager.remove(key); },
+                getUserTasks(userId) { return DataManager.getUserTasks(userId); },
+                setUserTasks(userId, data) { DataManager.setUserTasks(userId, data); },
+                generateId() { return DataManager.generateId(); }
+            };
+
+            // ── Helpers ──
+            function getTodayDateStr() { return new Date().toISOString().split('T')[0]; }
+
+            function checkAndResetDailyTasks(userId) {
+                const userTasks = STORE.getUserTasks(userId);
+                const lastDate = userTasks.date || '';
+                const today = getTodayDateStr();
+                if (lastDate !== today) {
+                    userTasks.completed = [];
+                    userTasks.date = today;
+                    STORE.setUserTasks(userId, userTasks);
+                    applyDailyDecay(userId);
+                }
+            }
+
+            function applyDailyDecay(userId) {
+                const users = STORE.get('users');
+                const userIdx = users.findIndex(u => u.id === userId);
+                if (userIdx === -1) return;
+                const user = users[userIdx];
+                if (user.isSpecial) return;
+                if (user.refCount > 0) return;
+                if (user.perTaskEarning > 0.001) {
+                    const newEarning = Math.max(0.001, user.perTaskEarning - 0.001);
+                    users[userIdx].perTaskEarning = newEarning;
+                    STORE.set('users', users);
+                }
+            }
+
+            function generateImageAdTask(index) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 320;
+                canvas.height = 180;
+                const ctx = canvas.getContext('2d');
+                const colors = ['#f7931a', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#f59e0b', '#6366f1'];
+                ctx.fillStyle = colors[index % colors.length];
+                ctx.fillRect(0, 0, 320, 180);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`AD ${index + 1}`, 160, 60);
+                ctx.font = '16px sans-serif';
+                ctx.fillText('Earn Rewards', 160, 110);
+                ctx.fillText('Elite Nation', 160, 140);
+                return canvas.toDataURL('image/png');
+            }
+
+            function initData() {
+                if (!STORE.get('users')) STORE.set('users', []);
+                if (!STORE.get('pendingFee')) STORE.set('pendingFee', []);
+                if (!STORE.get('pendingWithdrawals')) STORE.set('pendingWithdrawals', []);
+                if (!STORE.get('approvedWithdrawals')) STORE.set('approvedWithdrawals', []);
+                if (!STORE.get('tasks')) {
+                    const tasks = [];
+                    for (let i = 0; i < 20; i++) tasks.push({ id: 'task_img_' + i, code: '', image: generateImageAdTask(
+                            i), createdAt: Date.now() });
+                    STORE.set('tasks', tasks);
+                }
+                if (!STORE.get('marqueeText')) STORE.set('marqueeText', '🔥 Welcome to Elite Nation! Complete tasks & earn rewards. New plans available! 🚀');
+                if (!STORE.get('companyDocs')) STORE.set('companyDocs', []);
+                if (!STORE.get('chatMessages')) STORE.set('chatMessages', []);
+                if (!STORE.get('subAdmins')) STORE.set('subAdmins', []);
+                if (!STORE.get('paymentConfig')) {
+                    STORE.set('paymentConfig', {
+                        jazzcashNumber: '03027527798',
+                        jazzcashTitle: 'Mansoor Ahmad',
+                        plans: [
+                            { name: 'Starter Plan', price: 750, usd: 2.7, ads: 5 },
+                            { name: 'Golden Plan', price: 1500, usd: 5.5, ads: 10 },
+                            { name: 'Demand Plan', price: 3000, usd: 12, ads: 15 }
+                        ],
+                        cryptoFeeUSD: 5,
+                        usdtAddress: '0x3367fF2bB10E0aF800A86F79cd69Ab58FA2ef59B',
+                        usdcAddress: '0x3367fF2bB10E0aF800A86F79cd69Ab58FA2ef59B',
+                        withdrawalMethods: ['JazzCash', 'EasyPaisa', 'Upaisa'],
+                        enableCryptoWithdraw: true,
+                        baseDomain: 'elitenation.app'
+                    });
+                } else {
+                    let cfg = STORE.get('paymentConfig');
+                    if (!cfg.withdrawalMethods) cfg.withdrawalMethods = ['JazzCash', 'EasyPaisa', 'Upaisa'];
+                    if (cfg.enableCryptoWithdraw === undefined) cfg.enableCryptoWithdraw = true;
+                    if (!cfg.baseDomain) cfg.baseDomain = 'elitenation.app';
+                    STORE.set('paymentConfig', cfg);
+                }
+                if (!STORE.get('adminProfilePic')) STORE.set('adminProfilePic', '');
+                let users = STORE.get('users');
+                const adminExists = users.find(u => u.email === 'business236670@gmail.com');
+                if (!adminExists) {
+                    users.push({
+                        id: '000001',
+                        fullName: 'Admin',
+                        email: 'business236670@gmail.com',
+                        password: 'Sh@mas236670',
+                        whatsapp: '',
+                        city: '',
+                        address: '',
+                        country: 'Pakistan',
+                        referralCode: '',
+                        isAdmin: true,
+                        isApproved: true,
+                        isSpecial: false,
+                        specialEarning: null,
+                        currentBalance: 0,
+                        totalBalance: 0,
+                        perTaskEarning: 0.01,
+                        plan: null,
+                        profilePic: '',
+                        createdAt: Date.now(),
+                        refCount: 0,
+                        referredBy: null,
+                        levelBonusClaimed: {},
+                        withdrawCount: 0,
+                        isBlocked: false,
+                        isSubAdmin: false,
+                    });
+                    STORE.set('users', users);
+                }
+                users = STORE.get('users');
+                let updated = false;
+                users.forEach(u => {
+                    if (u.perTaskEarning === undefined) { u.perTaskEarning = 0.01;
+                        updated = true; }
+                    if (u.withdrawCount === undefined) { u.withdrawCount = 0;
+                        updated = true; }
+                    if (u.isBlocked === undefined) { u.isBlocked = false;
+                        updated = true; }
+                    if (u.isSpecial === undefined) { u.isSpecial = false;
+                        updated = true; }
+                    if (u.specialEarning === undefined) { u.specialEarning = null;
+                        updated = true; }
+                    if (u.levelBonusClaimed === undefined) { u.levelBonusClaimed = {};
+                        updated = true; }
+                    if (u.refCount === undefined) { u.refCount = 0;
+                        updated = true; }
+                    if (u.profilePic === undefined) { u.profilePic = '';
+                        updated = true; }
+                    if (u.plan === undefined) { u.plan = null;
+                        updated = true; }
+                    if (u.isSubAdmin === undefined) { u.isSubAdmin = false;
+                        updated = true; }
+                });
+                if (updated) STORE.set('users', users);
+            }
+
+            function generateID() {
+                const users = STORE.get('users');
+                let id;
+                do { id = String(Math.floor(100000 + Math.random() * 900000)); } while (users.find(u => u.id === id));
+                return id;
+            }
+
+            function getCurrentUser() {
+                const uid = STORE.get('currentUserId');
+                if (!uid) return null;
+                return STORE.get('users').find(u => u.id === uid) || null;
+            }
+
+            function updateCurrentUser(updates) {
+                const uid = STORE.get('currentUserId');
+                if (!uid) return;
+                let users = STORE.get('users');
+                const idx = users.findIndex(u => u.id === uid);
+                if (idx >= 0) { users[idx] = { ...users[idx], ...updates };
+                    STORE.set('users', users); }
+            }
+
+            function findUserById(id) { return STORE.get('users').find(u => u.id === id); }
+
+            function saveUsers(users) { STORE.set('users', users); }
+
+            function showToast(msg, duration = 2500) {
+                const tc = document.getElementById('toastContainer');
+                const t = document.createElement('div');
+                t.className = 'toast';
+                t.textContent = msg;
+                tc.appendChild(t);
+                setTimeout(() => t.remove(), duration);
+            }
+
+            function playNotifSound() { try { document.getElementById('notifSound').play().catch(() => {}); } catch (e) {} }
+
+            function addNotification(userId, msg) {
+                let notifs = STORE.get('notifications');
+                notifs.push({ userId, msg, read: false, time: Date.now() });
+                STORE.set('notifications', notifs);
+            }
+
+            function getUnreadCount(userId) { return STORE.get('notifications').filter(n => n.userId === userId && !n.read)
+                    .length; }
+
+            function markNotifsRead(userId) {
+                let notifs = STORE.get('notifications');
+                notifs.forEach(n => { if (n.userId === userId) n.read = true; });
+                STORE.set('notifications', notifs);
+            }
+
+            function getUserNotifs(userId) { return STORE.get('notifications').filter(n => n.userId === userId).sort((a, b) =>
+                    b.time - a.time); }
+
+            // ── Referral link handling ──
+            let _referralCode = null;
+
+            function parseReferralFromURL() {
+                const path = window.location.pathname;
+                if (path.startsWith('/ref/')) {
+                    const parts = path.split('/');
+                    if (parts.length >= 3) {
+                        const code = parts[2];
+                        if (code && code.length > 0) {
+                            _referralCode = code;
+                            console.log('🔗 Referral code detected:', _referralCode);
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // ── DOM refs ──
+            const container = document.getElementById('appContainer');
+            const modalContainer = document.getElementById('modalContainer');
+
+            function render(html) { container.innerHTML = html; }
+
+            function showModal(html) {
+                modalContainer.innerHTML =
+                    `<div class="modal-overlay" onclick="if(event.target===this)document.getElementById('modalContainer').innerHTML=''">
+                <div class="modal" onclick="event.stopPropagation()">${html}</div></div>`;
+            }
+
+            function closeModal() { modalContainer.innerHTML = ''; }
+
+            // ── Screens ──
+            function screenRegister() {
+                const countries = ['Pakistan', 'India', 'China', 'Japan', 'Saudi Arabia', 'United Arab Emirates (UAE)',
+                    'Turkey', 'Iran', 'Afghanistan', 'Bangladesh', 'Nepal', 'Sri Lanka', 'United States (USA)',
+                    'Canada', 'Mexico', 'Brazil', 'Argentina', 'United Kingdom (UK)', 'France', 'Germany', 'Italy',
+                    'Spain', 'Russia', 'Australia', 'New Zealand', 'South Africa', 'Egypt', 'Nigeria', 'Kenya',
+                    'Indonesia'
+                ];
+                render(`<div class="screen active"><div class="logo">ELITE NATION</div><div class="logo-sub">Earn With Trust</div>
+                <div class="card"><h3>📝 Register</h3>
+                <input id="regName" placeholder="Full Name *" /><input id="regEmail" type="email" placeholder="Email *" />
+                <input id="regWhatsapp" placeholder="WhatsApp Number *" /><input id="regCity" placeholder="City *" />
+                <input id="regAddress" placeholder="Complete Address *" />
+                <select id="regCountry">${countries.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>
+                <input id="regPassword" type="password" placeholder="Password *" />
+                <input id="regRefCode" placeholder="Referral Code (optional)" value="${_referralCode || ''}" />
+                <button class="btn btn-gold" onclick="APP.handleRegister()">Register</button>
+                <p style="text-align:center;margin-top:10px;font-size:0.8rem;color:var(--text2)">Already have an account? <span style="color:var(--accent);cursor:pointer" onclick="APP.screenLogin()">Login</span></p>
+                </div></div>`);
+                // After render, if referral code exists, we can also show a toast
+                if (_referralCode) {
+                    setTimeout(() => showToast('Referral code applied: ' + _referralCode), 500);
+                }
+            }
+
+            function screenLogin() {
+                render(`<div class="screen active"><div class="logo">ELITE NATION</div><div class="logo-sub">Welcome Back</div>
+                <div class="card"><h3>🔐 Login</h3>
+                <input id="loginEmail" type="email" placeholder="Email *" />
+                <input id="loginPassword" type="password" placeholder="Password *" />
+                <button class="btn btn-gold" onclick="APP.handleLogin()">Login</button>
+                <p style="text-align:center;margin-top:10px;font-size:0.8rem;color:var(--text2)">Don't have an account? <span style="color:var(--accent);cursor:pointer" onclick="APP.screenRegister()">Register</span></p>
+                </div></div>`);
+            }
+
+            function screenPaymentForm() {
+                const user = getCurrentUser();
+                if (!user) return screenLogin();
+                const config = STORE.get('paymentConfig');
+                render(`<div class="screen active"><div class="logo">ELITE NATION</div><div class="logo-sub">Complete Registration</div>
+                <div class="card"><h3>💳 Registration Fee Payment</h3>
+                <p style="font-size:0.8rem;color:var(--text2);margin-bottom:10px;">Select a plan & payment method</p>
+                <div class="grid-3" style="margin-bottom:12px;">${config.plans.map((p,i)=>`<div class="plan-card" data-idx="${i}" onclick="APP.selectPlan(${i})"><h4>${p.name}</h4><div class="price">Rs ${p.price}</div><small>(${p.usd} USD) - ${p.ads} Ads</small></div>`).join('')}</div>
+                <div id="paymentMethodTabs" class="tab-nav"><button class="active" onclick="APP.switchPaymentTab('jazzcash')">📱 JazzCash</button><button onclick="APP.switchPaymentTab('crypto')">🪙 Crypto</button></div>
+                <div id="paymentTabJazzcash"><p style="font-size:0.75rem;color:var(--text2)">Account: ${config.jazzcashNumber} | Title: ${config.jazzcashTitle}</p>
+                <input id="payAccountName" placeholder="Your Account Name *" /><input id="payAccountNumber" placeholder="Your Account Number *" />
+                <input id="payTransactionId" placeholder="Transaction ID *" /><label style="font-size:0.75rem;">Screenshot Proof:</label><input id="payScreenshot" type="file" accept="image/*" /></div>
+                <div id="paymentTabCrypto" style="display:none;"><p style="font-size:0.75rem;color:var(--accent)">Registration Fee: 5 USD (Crypto)</p>
+                <div class="card" style="padding:10px;margin-bottom:8px;"><strong>USDT ERC20:</strong><br/><small>${config.usdtAddress}</small><br/><strong>USDC ERC20:</strong><br/><small>${config.usdcAddress}</small></div>
+                <input id="cryptoTransactionHash" placeholder="Transaction Hash *" /><label style="font-size:0.75rem;">Screenshot Proof:</label><input id="cryptoScreenshot" type="file" accept="image/*" /></div>
+                <button class="btn btn-gold" onclick="APP.submitPayment()" style="margin-top:10px;">Submit Payment</button>
+                <button class="btn btn-outline btn-sm" onclick="APP.logout()" style="margin-top:6px;">Logout</button>
+                </div></div>`);
+                APP._selectedPlanIdx = 0;
+                APP._paymentMethod = 'jazzcash';
+            }
+
+            function screenPendingApproval() {
+                render(`<div class="screen active"><div class="logo">ELITE NATION</div><div class="logo-sub">Pending Approval</div>
+                <div class="card" style="text-align:center;"><div style="font-size:3rem;">⏳</div><h3>Your account is pending approval</h3>
+                <p style="color:var(--text2);font-size:0.85rem;">Admin will verify your payment soon.</p>
+                <button class="btn btn-outline btn-sm" onclick="APP.logout()" style="margin-top:12px;">Logout</button></div></div>`);
+            }
+
+            function screenUserDashboard() {
+                const user = getCurrentUser();
+                if (!user) return screenLogin();
+                if (!user.isApproved) return screenPendingApproval();
+                if (user.isBlocked) {
+                    render(
+                        `<div class="screen active"><div class="card" style="text-align:center;"><h3>🚫 Account Blocked</h3><p>Contact admin.</p><button class="btn btn-outline btn-sm" onclick="APP.logout()">Logout</button></div></div>`
+                        );
+                    return;
+                }
+                checkAndResetDailyTasks(user.id);
+                const unread = getUnreadCount(user.id);
+                const marqueeText = STORE.get('marqueeText') || 'Welcome!';
+                const config = STORE.get('paymentConfig');
+                const userPlan = config.plans.find(p => p.name === user.plan) || null;
+                const maxAds = userPlan ? userPlan.ads : 0;
+                const tasks = STORE.get('tasks');
+                const userTasks = STORE.getUserTasks(user.id);
+                const completed = userTasks.completed || [];
+                const available = tasks.filter(t => !completed.includes(t.id)).slice(0, maxAds);
+
+                const themeIcon = ThemeManager.getIcon();
+
+                render(`<div class="screen active" style="padding:12px;">
+                <div class="dashboard-header">
+                    <div class="user-info-top">
+                        <div class="avatar">${user.profilePic?`<img src="${user.profilePic}"/>`:user.fullName.charAt(0).toUpperCase()}</div>
+                        <div><strong>${user.fullName}</strong><br/><small>ID: ${user.id}</small></div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <button class="theme-toggle" id="themeToggleBtn" onclick="APP.toggleTheme()" title="Toggle theme">${themeIcon}</button>
+                        <div class="notification-badge" onclick="APP.openNotifications()">🔔 ${unread>0?`<span class="count">${unread}</span>`:''}</div>
+                        <button class="btn btn-outline btn-sm" onclick="APP.logout()">Logout</button>
+                    </div>
+                </div>
+                <div class="marquee-bar"><span>${marqueeText}</span></div>
+                <div class="grid-2" style="margin-bottom:12px;">
+                    <div class="card" style="text-align:center;padding:14px;"><small>💰 Current Balance</small><br/><strong style="font-size:1.3rem;color:var(--accent)">$${user.currentBalance.toFixed(4)}</strong></div>
+                    <div class="card" style="text-align:center;padding:14px;"><small>📊 Total Earned</small><br/><strong style="font-size:1.3rem;color:var(--green)">$${user.totalBalance.toFixed(4)}</strong></div>
+                </div>
+                <div class="icon-grid" style="margin-bottom:12px;">
+                    <div class="icon-item" onclick="APP.openWithdraw()"><span class="ico">💸</span>Withdraw</div>
+                    <div class="icon-item" onclick="APP.openWithdrawHistory()"><span class="ico">📋</span>History</div>
+                    <div class="icon-item" onclick="APP.openTasks()"><span class="ico">📺</span>Tasks (${available.length})</div>
+                    <div class="icon-item" onclick="APP.openReferral()"><span class="ico">🔗</span>Referral</div>
+                    <div class="icon-item" onclick="APP.openTeam()"><span class="ico">👥</span>Team</div>
+                    <div class="icon-item" onclick="APP.openLevels()"><span class="ico">🏆</span>Levels</div>
+                    <div class="icon-item" onclick="APP.openProfile()"><span class="ico">👤</span>Profile</div>
+                    <div class="icon-item" onclick="APP.openCustomerService()"><span class="ico">💬</span>Support</div>
+                    <div class="icon-item" onclick="APP.openCompanyDocs()"><span class="ico">📜</span>Company</div>
+                </div>
+                ${available.length>0?`<div class="card"><h3>📺 Available Tasks</h3>${available.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="display:flex;align-items:center;gap:8px;">${t.image?`<img src="${t.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />`:''}<span>${t.code||'Image Ad'}</span></span><button class="btn btn-blue btn-sm" onclick="APP.completeTask('${t.id}')">View & Earn</button></div>`).join('')}</div>`:'<div class="card" style="text-align:center;color:var(--text2)">No tasks available today. Your plan allows ${maxAds} tasks per day.</div>'}
+                </div>`);
+                const toggleBtn = document.getElementById('themeToggleBtn');
+                if (toggleBtn) toggleBtn.textContent = ThemeManager.getIcon();
+            }
+
+            function screenAdminDashboard() {
+                const users = STORE.get('users');
+                const pendingFee = STORE.get('pendingFee');
+                const pendingWithdrawals = STORE.get('pendingWithdrawals');
+                const totalUsers = users.filter(u => !u.isAdmin).length;
+                const approvedUsers = users.filter(u => !u.isAdmin && u.isApproved).length;
+                const themeIcon = ThemeManager.getIcon();
+                render(`<div class="screen active" style="padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                    <strong style="font-size:1.2rem;">⚙️ Admin Panel</strong>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button class="theme-toggle" id="themeToggleBtn" onclick="APP.toggleTheme()" title="Toggle theme">${themeIcon}</button>
+                        <button class="btn btn-outline btn-sm" onclick="APP.logout()">Logout</button>
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-bottom:12px;">
+                    <div class="card" style="text-align:center;padding:12px;"><small>👥 Total Users</small><br/><strong style="font-size:1.5rem;">${totalUsers}</strong></div>
+                    <div class="card" style="text-align:center;padding:12px;"><small>✅ Approved</small><br/><strong style="font-size:1.5rem;color:var(--green)">${approvedUsers}</strong></div>
+                    <div class="card" style="text-align:center;padding:12px;"><small>⏳ Pending Fee</small><br/><strong style="font-size:1.5rem;color:var(--gold)">${pendingFee.length}</strong></div>
+                    <div class="card" style="text-align:center;padding:12px;"><small>💸 Pending Withdrawals</small><br/><strong style="font-size:1.5rem;color:var(--red)">${pendingWithdrawals.length}</strong></div>
+                </div>
+                <div class="icon-grid" style="margin-bottom:12px;">
+                    <div class="icon-item" onclick="APP.adminPendingFee()"><span class="ico">💳</span>Pending Fee</div>
+                    <div class="icon-item" onclick="APP.adminPendingWithdrawals()"><span class="ico">💸</span>P. Withdrawals</div>
+                    <div class="icon-item" onclick="APP.adminUsers()"><span class="ico">👥</span>Users</div>
+                    <div class="icon-item" onclick="APP.adminTasks()"><span class="ico">📺</span>Tasks</div>
+                    <div class="icon-item" onclick="APP.adminSpecial()"><span class="ico">⭐</span>Special</div>
+                    <div class="icon-item" onclick="APP.adminNotifications()"><span class="ico">🔔</span>Notifs</div>
+                    <div class="icon-item" onclick="APP.adminChat()"><span class="ico">💬</span>Support</div>
+                    <div class="icon-item" onclick="APP.adminProfile()"><span class="ico">👤</span>Profile</div>
+                    <div class="icon-item" onclick="APP.adminCompanyDocs()"><span class="ico">📜</span>Docs</div>
+                    <div class="icon-item" onclick="APP.adminSubAdmins()"><span class="ico">🛡️</span>Sub Admins</div>
+                    <div class="icon-item" onclick="APP.adminPaymentConfig()"><span class="ico">⚙️</span>Pay Config</div>
+                    <div class="icon-item" onclick="APP.adminMarquee()"><span class="ico">📢</span>Marquee</div>
+                </div>
+                </div>`);
+                const toggleBtn = document.getElementById('themeToggleBtn');
+                if (toggleBtn) toggleBtn.textContent = ThemeManager.getIcon();
+            }
+
+            function screenSubAdminDashboard() {
+                const subAdmin = getCurrentUser();
+                if (!subAdmin || !subAdmin.isSubAdmin) return screenLogin();
+                const subRecord = STORE.get('subAdmins').find(s => s.email === subAdmin.email);
+                const perms = subRecord ? subRecord.permissions : {};
+                const users = STORE.get('users');
+                const pendingFee = STORE.get('pendingFee');
+                const pendingWithdrawals = STORE.get('pendingWithdrawals');
+                const themeIcon = ThemeManager.getIcon();
+                let html =
+                    `<div class="screen active" style="padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                    <strong style="font-size:1.2rem;">🛡️ Sub Admin Panel</strong>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button class="theme-toggle" id="themeToggleBtn" onclick="APP.toggleTheme()" title="Toggle theme">${themeIcon}</button>
+                        <button class="btn btn-outline btn-sm" onclick="APP.logout()">Logout</button>
+                    </div>
+                </div>
+                <div class="grid-2" style="margin-bottom:12px;">`;
+                if (perms.fee) html +=
+                    `<div class="card" style="text-align:center;padding:12px;"><small>⏳ Pending Fee</small><br/><strong style="font-size:1.5rem;color:var(--gold)">${pendingFee.length}</strong></div>`;
+                if (perms.withdraw) html +=
+                    `<div class="card" style="text-align:center;padding:12px;"><small>💸 Pending Withdrawals</small><br/><strong style="font-size:1.5rem;color:var(--red)">${pendingWithdrawals.length}</strong></div>`;
+                if (perms.users) html +=
+                    `<div class="card" style="text-align:center;padding:12px;"><small>👥 Total Users</small><br/><strong style="font-size:1.5rem;">${users.filter(u=>!u.isAdmin).length}</strong></div>`;
+                html += `</div><div class="icon-grid" style="margin-bottom:12px;">`;
+                if (perms.fee) html +=
+                    `<div class="icon-item" onclick="APP.adminPendingFee()"><span class="ico">💳</span>Pending Fee</div>`;
+                if (perms.withdraw) html +=
+                    `<div class="icon-item" onclick="APP.adminPendingWithdrawals()"><span class="ico">💸</span>P. Withdrawals</div>`;
+                if (perms.users) html +=
+                    `<div class="icon-item" onclick="APP.adminUsers()"><span class="ico">👥</span>Users</div>`;
+                if (perms.tasks) html +=
+                    `<div class="icon-item" onclick="APP.adminTasks()"><span class="ico">📺</span>Tasks</div>`;
+                if (perms.special) html +=
+                    `<div class="icon-item" onclick="APP.adminSpecial()"><span class="ico">⭐</span>Special</div>`;
+                if (perms.notifications) html +=
+                    `<div class="icon-item" onclick="APP.adminNotifications()"><span class="ico">🔔</span>Notifs</div>`;
+                if (perms.support) html +=
+                    `<div class="icon-item" onclick="APP.adminChat()"><span class="ico">💬</span>Support</div>`;
+                if (perms.docs) html +=
+                    `<div class="icon-item" onclick="APP.adminCompanyDocs()"><span class="ico">📜</span>Docs</div>`;
+                if (perms.paymentConfig) html +=
+                    `<div class="icon-item" onclick="APP.adminPaymentConfig()"><span class="ico">⚙️</span>Pay Config</div>`;
+                if (perms.marquee) html +=
+                    `<div class="icon-item" onclick="APP.adminMarquee()"><span class="ico">📢</span>Marquee</div>`;
+                html += `</div></div>`;
+                render(html);
+                const toggleBtn = document.getElementById('themeToggleBtn');
+                if (toggleBtn) toggleBtn.textContent = ThemeManager.getIcon();
+            }
+
+            // ── Handlers ──
+            function handleRegister() {
+                const name = document.getElementById('regName')?.value.trim();
+                const email = document.getElementById('regEmail')?.value.trim();
+                const whatsapp = document.getElementById('regWhatsapp')?.value.trim();
+                const city = document.getElementById('regCity')?.value.trim();
+                const address = document.getElementById('regAddress')?.value.trim();
+                const country = document.getElementById('regCountry')?.value;
+                const password = document.getElementById('regPassword')?.value;
+                let refCode = document.getElementById('regRefCode')?.value.trim();
+                // If input is empty but we have referral from URL, use that
+                if (!refCode && _referralCode) {
+                    refCode = _referralCode;
+                }
+                if (!name || !email || !whatsapp || !city || !address || !password) return showToast(
+                    'Please fill all required fields!');
+                let users = STORE.get('users');
+                if (users.find(u => u.email === email)) return showToast('Email already registered!');
+                const newUser = {
+                    id: generateID(),
+                    fullName: name,
+                    email,
+                    password,
+                    whatsapp,
+                    city,
+                    address,
+                    country,
+                    referralCode: refCode || '',
+                    isAdmin: false,
+                    isApproved: false,
+                    isSpecial: false,
+                    specialEarning: null,
+                    currentBalance: 0,
+                    totalBalance: 0,
+                    perTaskEarning: 0.01,
+                    plan: null,
+                    profilePic: '',
+                    createdAt: Date.now(),
+                    refCount: 0,
+                    referredBy: refCode || null,
+                    levelBonusClaimed: {},
+                    withdrawCount: 0,
+                    isBlocked: false,
+                    isSubAdmin: false,
+                };
+                users.push(newUser);
+                STORE.set('users', users);
+                STORE.set('currentUserId', newUser.id);
+                showToast('Your account has been successfully registered!');
+                setTimeout(() => screenPaymentForm(), 600);
+            }
+
+            function handleLogin() {
+                const email = document.getElementById('loginEmail')?.value.trim();
+                const password = document.getElementById('loginPassword')?.value;
+                if (!email || !password) return showToast('Please fill all fields!');
+                const users = STORE.get('users');
+                const user = users.find(u => u.email === email && u.password === password);
+                if (!user) return showToast('Invalid credentials!');
+                if (user.isBlocked) return showToast('Your account is blocked.');
+                STORE.set('currentUserId', user.id);
+                if (user.isAdmin && !user.isSubAdmin) screenAdminDashboard();
+                else if (user.isSubAdmin) screenSubAdminDashboard();
+                else if (!user.isApproved) {
+                    const pendingFee = STORE.get('pendingFee');
+                    if (pendingFee.find(p => p.userId === user.id)) screenPendingApproval();
+                    else screenPaymentForm();
+                } else screenUserDashboard();
+            }
+
+            function logout() {
+                STORE.remove('currentUserId');
+                screenLogin();
+                closeModal();
+            }
+
+            function selectPlan(idx) {
+                APP._selectedPlanIdx = idx;
+                document.querySelectorAll('.plan-card').forEach((el, i) => el.classList.toggle('selected', i === idx));
+            }
+
+            function switchPaymentTab(tab) {
+                APP._paymentMethod = tab;
+                document.getElementById('paymentTabJazzcash').style.display = tab === 'jazzcash' ? 'block' : 'none';
+                document.getElementById('paymentTabCrypto').style.display = tab === 'crypto' ? 'block' : 'none';
+                document.querySelectorAll('#paymentMethodTabs button').forEach(b => b.classList.toggle('active', b.textContent
+                    .toLowerCase().includes(tab)));
+            }
+
+            function submitPayment() {
+                const user = getCurrentUser();
+                if (!user) return;
+                const config = STORE.get('paymentConfig');
+                const plan = config.plans[APP._selectedPlanIdx || 0];
+                const method = APP._paymentMethod || 'jazzcash';
+                let paymentData = { userId: user.id, userName: user.fullName, plan: plan.name, amount: plan.price,
+                    usdAmount: plan.usd, method, time: Date.now() };
+                if (method === 'jazzcash') {
+                    paymentData.accountName = document.getElementById('payAccountName')?.value || '';
+                    paymentData.accountNumber = document.getElementById('payAccountNumber')?.value || '';
+                    paymentData.transactionId = document.getElementById('payTransactionId')?.value || '';
+                    const fileInput = document.getElementById('payScreenshot');
+                    if (fileInput?.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) { paymentData.screenshot = e.target.result;
+                            finalizePayment(paymentData, plan); };
+                        reader.readAsDataURL(fileInput.files[0]);
+                        return;
+                    }
+                    if (!paymentData.accountName || !paymentData.accountNumber || !paymentData.transactionId) return showToast(
+                        'Please fill all JazzCash fields!');
+                } else {
+                    paymentData.transactionHash = document.getElementById('cryptoTransactionHash')?.value || '';
+                    const fileInput = document.getElementById('cryptoScreenshot');
+                    if (fileInput?.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) { paymentData.screenshot = e.target.result;
+                            finalizePayment(paymentData, plan); };
+                        reader.readAsDataURL(fileInput.files[0]);
+                        return;
+                    }
+                    if (!paymentData.transactionHash) return showToast('Please enter Transaction Hash!');
+                }
+                finalizePayment(paymentData, plan);
+            }
+
+            function finalizePayment(paymentData, plan) {
+                let pendingFee = STORE.get('pendingFee');
+                pendingFee.push(paymentData);
+                STORE.set('pendingFee', pendingFee);
+                updateCurrentUser({ plan: plan.name });
+                addNotification('000001', `New payment from ${paymentData.userName} for ${plan.name}`);
+                showToast('Payment submitted! Waiting for admin approval.');
+                setTimeout(() => screenPendingApproval(), 600);
+            }
+
+            // ── TASK COMPLETION with daily limit ──
+            function completeTask(taskId) {
+                const user = getCurrentUser();
+                if (!user) return;
+                checkAndResetDailyTasks(user.id);
+                const config = STORE.get('paymentConfig');
+                const userPlan = config.plans.find(p => p.name === user.plan) || null;
+                const maxAds = userPlan ? userPlan.ads : 0;
+                const userTasks = STORE.getUserTasks(user.id);
+                const completed = userTasks.completed || [];
+                if (completed.includes(taskId)) {
+                    showToast('Task already completed today!');
+                    return;
+                }
+                if (completed.length >= maxAds) {
+                    showToast(`You have completed all ${maxAds} tasks for today!`);
+                    return;
+                }
+                const task = STORE.get('tasks').find(t => t.id === taskId);
+                showModal(
+                    `<h3>📺 Advertisement</h3><div style="background:#1a1f2e;padding:20px;text-align:center;border-radius:10px;margin:10px 0;">${task?.image?`<img src="${task.image}" style="max-width:100%;border-radius:8px;margin-bottom:8px;" />`:''}<p>${task?.code||'Image Ad'}</p><p style="color:var(--text2);font-size:0.75rem;">Watch the ad to earn</p></div><button class="btn btn-gold" onclick="APP.confirmTaskComplete('${taskId}')">✅ Complete & Earn</button><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Cancel</button>`
+                );
+            }
+
+            function confirmTaskComplete(taskId) {
+                closeModal();
+                const user = getCurrentUser();
+                if (!user) return;
+                checkAndResetDailyTasks(user.id);
+                const config = STORE.get('paymentConfig');
+                const userPlan = config.plans.find(p => p.name === user.plan) || null;
+                const maxAds = userPlan ? userPlan.ads : 0;
+                const userTasks = STORE.getUserTasks(user.id);
+                const completed = userTasks.completed || [];
+                if (completed.includes(taskId)) {
+                    showToast('Task already completed!');
+                    return;
+                }
+                if (completed.length >= maxAds) {
+                    showToast('You have already completed all tasks for today!');
+                    return;
+                }
+                completed.push(taskId);
+                userTasks.completed = completed;
+                STORE.setUserTasks(user.id, userTasks);
+                const earning = user.perTaskEarning;
+                updateCurrentUser({ currentBalance: user.currentBalance + earning, totalBalance: user.totalBalance +
+                        earning });
+                showToast(`+$${earning.toFixed(4)} earned!`);
+                screenUserDashboard();
+            }
+
+            // ── WITHDRAWAL ──
+            function openWithdraw() {
+                const user = getCurrentUser();
+                if (!user) return;
+                const config = STORE.get('paymentConfig');
+                const wCount = user.withdrawCount || 0;
+                let minJazzcash = wCount === 0 ? 0.5 : wCount === 1 ? 1.2 : 1.6;
+                let minCrypto = wCount === 0 ? 1.5 : wCount === 1 ? 2.7 : 3.9;
+                const methods = config.withdrawalMethods || ['JazzCash', 'EasyPaisa', 'Upaisa'];
+                showModal(
+                    `<h3>💸 Withdraw</h3><div class="tab-nav"><button class="active" onclick="APP.switchWithdrawTab('jazzcash')">📱 ${methods[0]}</button>${config.enableCryptoWithdraw?`<button onclick="APP.switchWithdrawTab('crypto')">🪙 Crypto</button>`:''}</div><div id="wJazzcash"><p style="font-size:0.7rem;color:var(--text2)">Min withdraw: $${minJazzcash} | Fee: 8% (displayed only)</p><input id="wAccountNumber" placeholder="Account Number *" /><input id="wAccountTitle" placeholder="Account Title *" /><select id="wMethod">${methods.map(m=>`<option>${m}</option>`).join('')}</select><input id="wAmount" type="number" step="0.01" placeholder="Amount (USD) *" /></div><div id="wCrypto" style="display:none;"><p style="font-size:0.7rem;color:var(--text2)">Min withdraw: $${minCrypto} | Fee: 8% (displayed only)</p><select id="wCryptoType"><option>USDT ERC20</option><option>USDC ERC20</option></select><input id="wWalletAddress" placeholder="Wallet Address *" /><input id="wCryptoAmount" type="number" step="0.01" placeholder="Amount (USD) *" /></div><button class="btn btn-gold" onclick="APP.submitWithdraw()">Submit Withdrawal</button><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Cancel</button>`
+                );
+                APP._withdrawTab = 'jazzcash';
+            }
+
+            function switchWithdrawTab(tab) {
+                APP._withdrawTab = tab;
+                document.getElementById('wJazzcash').style.display = tab === 'jazzcash' ? 'block' : 'none';
+                document.getElementById('wCrypto').style.display = tab === 'crypto' ? 'block' : 'none';
+                document.querySelectorAll('#modalContainer .tab-nav button').forEach(b => b.classList.toggle('active', b
+                    .textContent.toLowerCase().includes(tab)));
+            }
+
+            function submitWithdraw() {
+                const user = getCurrentUser();
+                if (!user) return;
+                const config = STORE.get('paymentConfig');
+                const tab = APP._withdrawTab || 'jazzcash';
+                const wCount = user.withdrawCount || 0;
+                let minAmount, amount;
+                let withdrawData = { userId: user.id, userName: user.fullName, method: tab, time: Date.now(),
+                    status: 'pending' };
+                if (tab === 'jazzcash') {
+                    minAmount = wCount === 0 ? 0.5 : wCount === 1 ? 1.2 : 1.6;
+                    amount = parseFloat(document.getElementById('wAmount')?.value);
+                    withdrawData.accountNumber = document.getElementById('wAccountNumber')?.value || '';
+                    withdrawData.accountTitle = document.getElementById('wAccountTitle')?.value || '';
+                    withdrawData.subMethod = document.getElementById('wMethod')?.value || config.withdrawalMethods[0];
+                    if (!withdrawData.accountNumber || !withdrawData.accountTitle) return showToast(
+                        'Please fill all fields!');
+                } else {
+                    minAmount = wCount === 0 ? 1.5 : wCount === 1 ? 2.7 : 3.9;
+                    amount = parseFloat(document.getElementById('wCryptoAmount')?.value);
+                    withdrawData.walletAddress = document.getElementById('wWalletAddress')?.value || '';
+                    withdrawData.cryptoType = document.getElementById('wCryptoType')?.value || 'USDT ERC20';
+                    if (!withdrawData.walletAddress) return showToast('Please enter wallet address!');
+                }
+                if (!amount || amount < minAmount) return showToast(`Minimum withdrawal is $${minAmount}!`);
+                if (amount > user.currentBalance) return showToast('Insufficient balance!');
+                withdrawData.amount = amount;
+                let pendingWithdrawals = STORE.get('pendingWithdrawals');
+                pendingWithdrawals.push(withdrawData);
+                STORE.set('pendingWithdrawals', pendingWithdrawals);
+                updateCurrentUser({ currentBalance: user.currentBalance - amount, withdrawCount: wCount + 1 });
+                addNotification('000001', `New withdrawal request from ${user.fullName} for $${amount}`);
+                showToast('Withdrawal submitted!');
+                closeModal();
+                screenUserDashboard();
+            }
+
+            // ── UPDATED: Withdrawal History with status and sorting ──
+            function openWithdrawHistory() {
+                const user = getCurrentUser();
+                if (!user) return;
+                const pending = STORE.get('pendingWithdrawals').filter(w => w.userId === user.id);
+                const approved = STORE.get('approvedWithdrawals').filter(w => w.userId === user.id);
+                // Combine and mark status
+                let all = [
+                    ...pending.map(w => ({ ...w, status: 'Pending' })),
+                    ...approved.map(w => ({ ...w, status: 'Approved' }))
+                ];
+                // Sort by time descending (newest first)
+                all.sort((a, b) => b.time - a.time);
+
+                showModal(
+                    `<h3>📋 Withdrawal History</h3>
+                    ${all.length === 0 ? '<p>No withdrawals yet.</p>' :
+                    all.map(w => `<div class="card" style="padding:10px;margin-bottom:6px;">
+                        <strong>$${w.amount.toFixed(2)}</strong>
+                        <span class="badge ${w.status === 'Approved' ? 'badge-green' : 'badge-gold'}">${w.status}</span>
+                        <br/><small>${w.method} | ${new Date(w.time).toLocaleDateString()} ${new Date(w.time).toLocaleTimeString()}</small>
+                        ${w.status === 'Approved' && w.approvedTime ? `<br/><small>Approved on: ${new Date(w.approvedTime).toLocaleString()}</small>` : ''}
+                    </div>`).join('')}
+                    <button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function openTasks() {
+                const user = getCurrentUser();
+                if (!user) return;
+                checkAndResetDailyTasks(user.id);
+                const config = STORE.get('paymentConfig');
+                const userPlan = config.plans.find(p => p.name === user.plan) || null;
+                const maxAds = userPlan ? userPlan.ads : 0;
+                const tasks = STORE.get('tasks');
+                const userTasks = STORE.getUserTasks(user.id);
+                const completed = userTasks.completed || [];
+                const available = tasks.filter(t => !completed.includes(t.id)).slice(0, maxAds);
+                showModal(
+                    `<h3>📺 Tasks (${available.length}/${maxAds})</h3><p style="font-size:0.7rem;">Per task earning: $${user.perTaskEarning.toFixed(4)}</p>${available.length===0?'<p>No tasks available today. Your plan allows ${maxAds} tasks per day.</p>':available.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);"><span style="display:flex;align-items:center;gap:8px;">${t.image?`<img src="${t.image}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;" />`:''}<span>${t.code||'Image Ad'}</span></span><button class="btn btn-blue btn-sm" onclick="APP.completeTaskFromModal('${t.id}')">View</button></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function completeTaskFromModal(taskId) { closeModal();
+                completeTask(taskId); }
+
+            function openReferral() {
+                const user = getCurrentUser();
+                if (!user) return;
+                // Use current domain dynamically
+                const domain = window.location.origin;
+                const refLink = `${domain}/ref/${user.id}`;
+                showModal(
+                    `<h3>🔗 Referral Link</h3><div class="card" style="padding:10px;word-break:break-all;"><strong>Code:</strong> ${user.id}<br/><strong>Link:</strong> ${refLink}<button class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText('${refLink}');APP.showToastMsg('Copied!')">📋 Copy</button></div><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function showToastMsg(msg) { showToast(msg); }
+
+            function openTeam() {
+                const user = getCurrentUser();
+                if (!user) return;
+                const directRefs = STORE.get('users').filter(u => u.referredBy === user.id && u.isApproved);
+                showModal(
+                    `<h3>👥 Your Team (${directRefs.length})</h3>${directRefs.length===0?'<p>No team members yet.</p>':directRefs.map(ref=>`<div class="card" style="padding:10px;cursor:pointer;" onclick="APP.viewRefTeam('${ref.id}')"><strong>${ref.fullName}</strong> <small>ID: ${ref.id}</small></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function viewRefTeam(refId) {
+                const refUser = findUserById(refId);
+                if (!refUser) return;
+                const subRefs = STORE.get('users').filter(u => u.referredBy === refId && u.isApproved);
+                showModal(
+                    `<h3>👥 ${refUser.fullName}'s Team (${subRefs.length})</h3>${subRefs.length===0?'<p>No sub-members.</p>':subRefs.map(r=>`<div class="card" style="padding:8px;"><strong>${r.fullName}</strong> <small>ID: ${r.id}</small></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.openTeam()">⬅ Back</button><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function openLevels() {
+                const user = getCurrentUser();
+                if (!user) return;
+                const directRefs = STORE.get('users').filter(u => u.referredBy === user.id && u.isApproved).length;
+                const levels = [{ lvl: 1, req: 10, bonus: 1.5 }, { lvl: 2, req: 20, bonus: 2.5 }, { lvl: 3, req: 35,
+                        bonus: 3.5 }, { lvl: 4, req: 45, bonus: 5 }, { lvl: 5, req: 60, bonus: 7 }, { lvl: 6, req: 75,
+                        bonus: 9.6 }, { lvl: 7, req: 200, bonus: 'Monthly Salary' }];
+                const claimed = user.levelBonusClaimed || {};
+                showModal(
+                    `<h3>🏆 Level Bonuses</h3><p>Direct referrals: ${directRefs}</p>${levels.map(l=>{const achieved=directRefs>=l.req;const isClaimed=claimed['level_'+l.lvl];return `<div class="card" style="padding:10px;margin-bottom:6px;${achieved&&!isClaimed?'border-color:var(--accent);':''}"><strong>Level ${l.lvl}:</strong> ${l.req} members → ${typeof l.bonus==='number'?'$'+l.bonus:l.bonus} ${achieved&&!isClaimed?`<button class="btn btn-gold btn-sm" onclick="APP.claimLevelBonus(${l.lvl})" style="float:right;">Claim</button>`:isClaimed?'<span class="badge badge-green" style="float:right;">Claimed</span>':'<span class="badge badge-red" style="float:right;">Not Reached</span>'}</div>`;}).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function claimLevelBonus(lvl) {
+                const user = getCurrentUser();
+                if (!user) return;
+                const bonuses = { 1: 1.5, 2: 2.5, 3: 3.5, 4: 5, 5: 7, 6: 9.6 };
+                const bonus = bonuses[lvl];
+                if (!bonus) return;
+                let claimed = user.levelBonusClaimed || {};
+                if (claimed['level_' + lvl]) return showToast('Already claimed!');
+                claimed['level_' + lvl] = true;
+                updateCurrentUser({ currentBalance: user.currentBalance + bonus, totalBalance: user.totalBalance + bonus,
+                    levelBonusClaimed: claimed });
+                showToast(`Level ${lvl} bonus claimed!`);
+                closeModal();
+                screenUserDashboard();
+            }
+
+            function openProfile() {
+                const user = getCurrentUser();
+                if (!user) return;
+                showModal(
+                    `<h3>👤 Profile</h3><div style="text-align:center;margin-bottom:12px;"><div class="avatar" style="width:70px;height:70px;margin:0 auto;font-size:1.8rem;">${user.profilePic?`<img src="${user.profilePic}" />`:user.fullName.charAt(0).toUpperCase()}</div><input id="profilePicInput" type="file" accept="image/*" style="margin-top:8px;font-size:0.75rem;" /><button class="btn btn-outline btn-sm" onclick="APP.uploadProfilePic()">Upload Photo</button></div><input id="newFullName" placeholder="New Full Name" value="${user.fullName}" /><button class="btn btn-outline btn-sm" onclick="APP.changeName()">Change Name</button><input id="newPassword" type="password" placeholder="New Password" style="margin-top:10px;" /><button class="btn btn-gold" onclick="APP.changePassword()">Change Password</button><button class="btn btn-outline btn-sm" onclick="APP.closeModal()" style="margin-top:6px;">Close</button>`
+                );
+            }
+
+            function changeName() {
+                const newName = document.getElementById('newFullName')?.value.trim();
+                if (!newName) return showToast('Enter a name!');
+                updateCurrentUser({ fullName: newName });
+                showToast('Name updated!');
+                closeModal();
+                screenUserDashboard();
+            }
+
+            function uploadProfilePic() {
+                const fileInput = document.getElementById('profilePicInput');
+                if (!fileInput?.files[0]) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    updateCurrentUser({ profilePic: e.target.result });
+                    showToast('Profile picture updated!');
+                    closeModal();
+                    screenUserDashboard();
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+
+            function changePassword() {
+                const newPass = document.getElementById('newPassword')?.value;
+                if (!newPass) return showToast('Enter new password!');
+                updateCurrentUser({ password: newPass });
+                showToast('Password changed!');
+                closeModal();
+            }
+
+            function openCustomerService() {
+                const user = getCurrentUser();
+                if (!user) return;
+                const messages = STORE.get('chatMessages').filter(m => m.userId === user.id || m.toUserId === user.id);
+                showModal(
+                    `<h3>💬 Customer Service</h3><div style="max-height:300px;overflow-y:auto;margin-bottom:10px;">${messages.map(m=>`<div class="chat-bubble ${m.fromAdmin?'admin':'user'}">${m.image?`<img src="${m.image}" class="chat-image" onclick="APP.zoomImage('${m.image}')" />`:''}${m.text}<br/><small>${new Date(m.time).toLocaleString()}</small>${!m.fromAdmin?`<button class="btn btn-sm btn-danger" onclick="APP.deleteChatMsg('${m.id}')">🗑</button>`:''}</div>`).join('')}</div><textarea id="chatMsgInput" placeholder="Type message..."></textarea><input id="chatImgInput" type="file" accept="image/*" style="font-size:0.75rem;" /><button class="btn btn-blue" onclick="APP.sendChatMsg()">Send</button><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function sendChatMsg() {
+                const user = getCurrentUser();
+                if (!user) return;
+                const text = document.getElementById('chatMsgInput')?.value.trim();
+                const fileInput = document.getElementById('chatImgInput');
+                let messages = STORE.get('chatMessages');
+                const msgObj = { id: 'msg_' + Date.now(), userId: user.id, userName: user.fullName, text,
+                    fromAdmin: false, time: Date.now(), image: null, toUserId: '000001' };
+                if (fileInput?.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        msgObj.image = e.target.result;
+                        messages.push(msgObj);
+                        STORE.set('chatMessages', messages);
+                        addNotification('000001', `New message from ${user.fullName}`);
+                        closeModal();
+                        openCustomerService();
+                    };
+                    reader.readAsDataURL(fileInput.files[0]);
+                    return;
+                }
+                if (!text) return;
+                messages.push(msgObj);
+                STORE.set('chatMessages', messages);
+                addNotification('000001', `New message from ${user.fullName}`);
+                closeModal();
+                openCustomerService();
+            }
+
+            function deleteChatMsg(msgId) {
+                let messages = STORE.get('chatMessages');
+                messages = messages.filter(m => m.id !== msgId);
+                STORE.set('chatMessages', messages);
+                closeModal();
+                openCustomerService();
+            }
+
+            function zoomImage(src) { showModal(
+                    `<img src="${src}" style="max-width:100%;border-radius:10px;cursor:zoom-out;" onclick="APP.closeModal()" />`
+                    ); }
+
+            function openNotifications() {
+                const user = getCurrentUser();
+                if (!user) return;
+                markNotifsRead(user.id);
+                const notifs = getUserNotifs(user.id);
+                showModal(
+                    `<h3>🔔 Notifications</h3>${notifs.length===0?'<p>No notifications.</p>':notifs.map(n=>`<div class="card" style="padding:10px;margin-bottom:4px;"><p>${n.msg}</p><small>${new Date(n.time).toLocaleString()}</small></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+                playNotifSound();
+            }
+
+            function openCompanyDocs() {
+                const docs = STORE.get('companyDocs');
+                showModal(
+                    `<h3>📜 Company Registered Proof</h3>${docs.length===0?'<p>No documents yet.</p>':docs.map(d=>`<div class="card" style="padding:10px;margin-bottom:6px;">${d.image?`<img src="${d.image}" style="max-width:100%;border-radius:8px;cursor:zoom-in;" onclick="APP.zoomImage('${d.image}')" />`:''}<p>${d.description||''}</p></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            // ── ADMIN FUNCTIONS ──
+            function adminPendingFee() {
+                const pendingFee = STORE.get('pendingFee');
+                showModal(
+                    `<h3>⏳ Pending Fee (${pendingFee.length})</h3>${pendingFee.length===0?'<p>No pending payments.</p>':pendingFee.map((p,i)=>`<div class="card" style="padding:10px;margin-bottom:6px;"><strong>${p.userName}</strong> (ID:${p.userId})<br/><small>Plan: ${p.plan} | Rs ${p.amount} | ${p.method}</small><br/>${p.accountName?`<small>Account: ${p.accountName}/${p.accountNumber}</small><br/>`:''}${p.transactionId?`<small>Txn ID: ${p.transactionId}</small><br/>`:''}${p.transactionHash?`<small>Hash: ${p.transactionHash}</small><br/>`:''}${p.screenshot?`<img src="${p.screenshot}" style="max-width:150px;border-radius:6px;cursor:zoom-in;" onclick="APP.zoomImage('${p.screenshot}')" /><br/>`:''}<div style="margin-top:6px;"><button class="btn btn-success btn-sm" onclick="APP.approveFee(${i})">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="APP.rejectFee(${i})">❌ Reject</button></div></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function approveFee(idx) {
+                let pendingFee = STORE.get('pendingFee');
+                const payment = pendingFee[idx];
+                if (!payment) return;
+                pendingFee.splice(idx, 1);
+                STORE.set('pendingFee', pendingFee);
+                let users = STORE.get('users');
+                const userIdx = users.findIndex(u => u.id === payment.userId);
+                if (userIdx >= 0) {
+                    users[userIdx].isApproved = true;
+                    users[userIdx].plan = payment.plan;
+                    if (users[userIdx].referredBy) {
+                        const ref1 = users.find(u => u.id === users[userIdx].referredBy);
+                        if (ref1) {
+                            ref1.currentBalance += 0.4;
+                            ref1.totalBalance += 0.4;
+                            ref1.refCount = (ref1.refCount || 0) + 1;
+                            ref1.perTaskEarning = (ref1.perTaskEarning || 0.01) + 0.008;
+                            addNotification(ref1.id, 'You earned $0.4 referral bonus!');
+                            if (ref1.referredBy) {
+                                const ref2 = users.find(u => u.id === ref1.referredBy);
+                                if (ref2) {
+                                    ref2.currentBalance += 0.1;
+                                    ref2.totalBalance += 0.1;
+                                    ref2.perTaskEarning = (ref2.perTaskEarning || 0.01) + 0.006;
+                                    addNotification(ref2.id, 'You earned $0.1 referral bonus from level 2!');
+                                    if (ref2.referredBy) {
+                                        const ref3 = users.find(u => u.id === ref2.referredBy);
+                                        if (ref3) {
+                                            ref3.perTaskEarning = (ref3.perTaskEarning || 0.01) + 0.002;
+                                            addNotification(ref3.id,
+                                                'Your per-task earning increased from level 3 referral!');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    saveUsers(users);
+                    addNotification(payment.userId, 'Your registration has been approved!');
+                }
+                closeModal();
+                adminPendingFee();
+                showToast('Approved!');
+            }
+
+            function rejectFee(idx) {
+                let pendingFee = STORE.get('pendingFee');
+                pendingFee.splice(idx, 1);
+                STORE.set('pendingFee', pendingFee);
+                closeModal();
+                adminPendingFee();
+                showToast('Rejected.');
+            }
+
+            function adminPendingWithdrawals() {
+                const pending = STORE.get('pendingWithdrawals');
+                showModal(
+                    `<h3>💸 Pending Withdrawals (${pending.length})</h3>${pending.length===0?'<p>No pending.</p>':pending.map((w,i)=>`<div class="card" style="padding:10px;margin-bottom:6px;"><strong>${w.userName}</strong> (ID:${w.userId})<br/><small>$${w.amount.toFixed(2)} | ${w.method}</small><br/>${w.accountNumber?`<small>Account: ${w.accountNumber} / ${w.accountTitle} (${w.subMethod})</small><br/>`:''}${w.walletAddress?`<small>Wallet: ${w.walletAddress} (${w.cryptoType})</small><br/>`:''}<button class="btn btn-success btn-sm" onclick="APP.approveWithdrawal(${i})">✅ Approve</button><button class="btn btn-danger btn-sm" onclick="APP.rejectWithdrawal(${i})">❌ Reject</button></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function approveWithdrawal(idx) {
+                let pending = STORE.get('pendingWithdrawals');
+                const w = pending[idx];
+                if (!w) return;
+                pending.splice(idx, 1);
+                STORE.set('pendingWithdrawals', pending);
+                let approved = STORE.get('approvedWithdrawals');
+                w.status = 'approved';
+                w.approvedTime = Date.now();
+                approved.push(w);
+                STORE.set('approvedWithdrawals', approved);
+                addNotification(w.userId, 'Your withdrawal has been approved!');
+                closeModal();
+                adminPendingWithdrawals();
+                showToast('Approved!');
+            }
+
+            function rejectWithdrawal(idx) {
+                let pending = STORE.get('pendingWithdrawals');
+                const w = pending[idx];
+                if (!w) return;
+                pending.splice(idx, 1);
+                STORE.set('pendingWithdrawals', pending);
+                let users = STORE.get('users');
+                const uIdx = users.findIndex(u => u.id === w.userId);
+                if (uIdx >= 0) {
+                    users[uIdx].currentBalance += w.amount;
+                    users[uIdx].withdrawCount = Math.max(0, (users[uIdx].withdrawCount || 1) - 1);
+                    saveUsers(users);
+                }
+                closeModal();
+                adminPendingWithdrawals();
+                showToast('Rejected. Refunded.');
+            }
+
+            function adminUsers() {
+                const users = STORE.get('users').filter(u => !u.isAdmin);
+                showModal(
+                    `<h3>👥 Users (${users.length})</h3><div style="max-height:400px;overflow-y:auto;">${users.map(u=>`<div class="card" style="padding:8px;margin-bottom:4px;font-size:0.75rem;"><strong>${u.fullName}</strong> ID:${u.id} <span class="badge ${u.isApproved?'badge-green':'badge-red'}">${u.isApproved?'Approved':'Pending'}</span>${u.isBlocked?'<span class="badge badge-red">Blocked</span>':''}<br/>Email: ${u.email} | Pass: ${u.password}<br/>Bal: $${u.currentBalance.toFixed(4)} | Total: $${u.totalBalance.toFixed(4)}<br/><button class="btn btn-sm ${u.isBlocked?'btn-success':'btn-danger'}" onclick="APP.toggleBlockUser('${u.id}')">${u.isBlocked?'Unblock':'Block'}</button></div>`).join('')}</div><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function toggleBlockUser(userId) {
+                let users = STORE.get('users');
+                const idx = users.findIndex(u => u.id === userId);
+                if (idx >= 0) { users[idx].isBlocked = !users[idx].isBlocked;
+                    saveUsers(users); }
+                closeModal();
+                adminUsers();
+            }
+
+            function adminTasks() {
+                const tasks = STORE.get('tasks');
+                showModal(
+                    `<h3>📺 Tasks Management (${tasks.length})</h3><textarea id="newTaskCode" placeholder="Paste ad code (optional)"></textarea><button class="btn btn-gold" onclick="APP.addTask()">Add Text Task</button><div style="max-height:250px;overflow-y:auto;margin-top:8px;">${tasks.map((t,i)=>`<div class="card" style="padding:8px;margin-bottom:4px;font-size:0.75rem;display:flex;align-items:center;gap:8px;">${t.image?`<img src="${t.image}" style="width:40px;height:25px;object-fit:cover;border-radius:4px;" />`:''}<span>${t.code||'Image Ad'} #${t.id.slice(-4)}</span><button class="btn btn-danger btn-sm" onclick="APP.deleteTask(${i})" style="margin-left:auto;">🗑</button></div>`).join('')}</div><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function addTask() {
+                const code = document.getElementById('newTaskCode')?.value.trim();
+                if (!code) return showToast('Enter ad code!');
+                let tasks = STORE.get('tasks');
+                tasks.push({ id: 'task_' + Date.now(), code, image: null, createdAt: Date.now() });
+                STORE.set('tasks', tasks);
+                closeModal();
+                adminTasks();
+            }
+
+            function deleteTask(idx) {
+                let tasks = STORE.get('tasks');
+                tasks.splice(idx, 1);
+                STORE.set('tasks', tasks);
+                closeModal();
+                adminTasks();
+            }
+
+            function adminSpecial() {
+                const users = STORE.get('users').filter(u => !u.isAdmin && u.isApproved);
+                showModal(
+                    `<h3>⭐ Special Users</h3>${users.map(u=>`<div class="card" style="padding:8px;margin-bottom:4px;font-size:0.75rem;"><strong>${u.fullName}</strong> (ID:${u.id}) ${u.isSpecial?'<span class="badge badge-gold">Special</span>':''}<br/>PerTask: $${u.perTaskEarning.toFixed(4)}${u.isSpecial?`<input id="specialEarn_${u.id}" type="number" step="0.001" placeholder="New earning" /><button class="btn btn-blue btn-sm" onclick="APP.updateSpecialEarning('${u.id}')">Update</button><button class="btn btn-danger btn-sm" onclick="APP.removeSpecial('${u.id}')">Remove</button>`:`<button class="btn btn-gold btn-sm" onclick="APP.makeSpecial('${u.id}')">Make Special</button>`}</div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function makeSpecial(userId) {
+                let users = STORE.get('users');
+                const idx = users.findIndex(u => u.id === userId);
+                if (idx >= 0) { users[idx].isSpecial = true;
+                    users[idx].specialEarning = users[idx].perTaskEarning;
+                    saveUsers(users); }
+                closeModal();
+                adminSpecial();
+            }
+
+            function updateSpecialEarning(userId) {
+                const val = parseFloat(document.getElementById('specialEarn_' + userId)?.value);
+                if (!val || val <= 0) return showToast('Enter valid earning!');
+                let users = STORE.get('users');
+                const idx = users.findIndex(u => u.id === userId);
+                if (idx >= 0) { users[idx].perTaskEarning = val;
+                    users[idx].specialEarning = val;
+                    saveUsers(users); }
+                closeModal();
+                adminSpecial();
+            }
+
+            function removeSpecial(userId) {
+                let users = STORE.get('users');
+                const idx = users.findIndex(u => u.id === userId);
+                if (idx >= 0) { users[idx].isSpecial = false;
+                    users[idx].specialEarning = null;
+                    users[idx].perTaskEarning = 0.01;
+                    saveUsers(users); }
+                closeModal();
+                adminSpecial();
+            }
+
+            function adminNotifications() {
+                const notifs = STORE.get('notifications').slice(-30).reverse();
+                showModal(
+                    `<h3>🔔 Notifications</h3>${notifs.map(n=>`<div class="card" style="padding:8px;">${n.msg}<small> ${new Date(n.time).toLocaleString()}</small></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function adminChat() {
+                const messages = STORE.get('chatMessages');
+                showModal(
+                    `<h3>💬 Customer Service</h3><div style="max-height:250px;overflow-y:auto;">${messages.map(m=>`<div class="chat-bubble ${m.fromAdmin?'admin':'user'}"><small><strong>${m.userName}</strong> (ID:${m.userId})</small><br/>${m.image?`<img src="${m.image}" class="chat-image" onclick="APP.zoomImage('${m.image}')" />`:''}${m.text}<br/><small>${new Date(m.time).toLocaleString()}</small></div>`).join('')}</div><textarea id="adminChatMsg" placeholder="Reply..."></textarea><input id="adminChatImg" type="file" accept="image/*" /><select id="adminChatTarget"><option value="all">Broadcast All</option>${[...new Set(messages.map(m=>m.userId))].map(uid=>{const u=findUserById(uid);return u?`<option value="${uid}">${u.fullName} (${uid})</option>`:'';}).join('')}</select><button class="btn btn-blue" onclick="APP.adminSendChat()">Send</button><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function adminSendChat() {
+                const text = document.getElementById('adminChatMsg')?.value.trim();
+                const fileInput = document.getElementById('adminChatImg');
+                const target = document.getElementById('adminChatTarget')?.value;
+                let messages = STORE.get('chatMessages');
+                const msgObj = { id: 'msg_' + Date.now(), userId: '000001', userName: 'Admin', text, fromAdmin: true,
+                    time: Date.now(), image: null, toUserId: target === 'all' ? null : target, broadcast: target ===
+                        'all' };
+                const processMsg = (imgData) => {
+                    msgObj.image = imgData || null;
+                    if (target === 'all') {
+                        const users = STORE.get('users').filter(u => !u.isAdmin && u.isApproved);
+                        users.forEach(u => {
+                            const m = { ...msgObj, toUserId: u.id, broadcast: true };
+                            messages.push(m);
+                            addNotification(u.id, '📢 Broadcast: ' + (text || '[Image]'));
+                        });
+                    } else {
+                        messages.push(msgObj);
+                        addNotification(target, 'New message from Admin');
+                    }
+                    STORE.set('chatMessages', messages);
+                    closeModal();
+                    adminChat();
+                };
+                if (fileInput?.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) { processMsg(e.target.result); };
+                    reader.readAsDataURL(fileInput.files[0]);
+                    return;
+                }
+                if (!text) return;
+                processMsg(null);
+            }
+
+            function adminProfile() {
+                const pic = STORE.get('adminProfilePic') || '';
+                showModal(
+                    `<h3>👤 Admin Profile</h3><div style="text-align:center;"><div class="avatar" style="width:70px;height:70px;margin:0 auto;">${pic?`<img src="${pic}" />`:'A'}</div><input id="adminPicInput" type="file" accept="image/*" /><button class="btn btn-outline btn-sm" onclick="APP.uploadAdminPic()">Upload</button></div><input id="adminNewPass" type="password" placeholder="New Password" /><button class="btn btn-gold" onclick="APP.changeAdminPass()">Change Password</button><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function uploadAdminPic() {
+                const fileInput = document.getElementById('adminPicInput');
+                if (!fileInput?.files[0]) return;
+                const reader = new FileReader();
+                reader.onload = function(e) { STORE.set('adminProfilePic', e.target.result);
+                    showToast('Updated!');
+                    closeModal(); };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+
+            function changeAdminPass() {
+                const newPass = document.getElementById('adminNewPass')?.value;
+                if (!newPass) return showToast('Enter new password!');
+                let users = STORE.get('users');
+                const idx = users.findIndex(u => u.id === '000001');
+                if (idx >= 0) { users[idx].password = newPass;
+                    saveUsers(users); }
+                showToast('Password changed!');
+                closeModal();
+            }
+
+            function adminCompanyDocs() {
+                const docs = STORE.get('companyDocs');
+                showModal(
+                    `<h3>📜 Company Docs</h3><input id="docDesc" placeholder="Description" /><input id="docImage" type="file" accept="image/*" /><button class="btn btn-gold" onclick="APP.uploadCompanyDoc()">Upload</button>${docs.map((d,i)=>`<div class="card" style="padding:8px;">${d.image?`<img src="${d.image}" style="max-width:100px;" />`:''}<p>${d.description||''}</p><button class="btn btn-danger btn-sm" onclick="APP.deleteCompanyDoc(${i})">🗑</button></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function uploadCompanyDoc() {
+                const desc = document.getElementById('docDesc')?.value || '';
+                const fileInput = document.getElementById('docImage');
+                let docs = STORE.get('companyDocs');
+                const docObj = { description: desc, image: null, time: Date.now() };
+                if (fileInput?.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        docObj.image = e.target.result;
+                        docs.push(docObj);
+                        STORE.set('companyDocs', docs);
+                        closeModal();
+                        adminCompanyDocs();
+                    };
+                    reader.readAsDataURL(fileInput.files[0]);
+                    return;
+                }
+                docs.push(docObj);
+                STORE.set('companyDocs', docs);
+                closeModal();
+                adminCompanyDocs();
+            }
+
+            function deleteCompanyDoc(idx) {
+                let docs = STORE.get('companyDocs');
+                docs.splice(idx, 1);
+                STORE.set('companyDocs', docs);
+                closeModal();
+                adminCompanyDocs();
+            }
+
+            function adminSubAdmins() {
+                const subs = STORE.get('subAdmins');
+                showModal(
+                    `<h3>🛡️ Sub Admins</h3><input id="subAdminEmail" placeholder="Email" /><input id="subAdminPass" type="password" placeholder="Password" /><div style="font-size:0.7rem; display:grid; grid-template-columns:1fr 1fr; gap:4px;"><label><input type="checkbox" id="permUsers" /> Users</label><label><input type="checkbox" id="permFee" /> Pending Fee</label><label><input type="checkbox" id="permWithdraw" /> Withdrawals</label><label><input type="checkbox" id="permTasks" /> Tasks</label><label><input type="checkbox" id="permSpecial" /> Special Users</label><label><input type="checkbox" id="permNotifications" /> Notifications</label><label><input type="checkbox" id="permSupport" /> Support Chat</label><label><input type="checkbox" id="permDocs" /> Company Docs</label><label><input type="checkbox" id="permPaymentConfig" /> Payment Config</label><label><input type="checkbox" id="permMarquee" /> Marquee</label></div><button class="btn btn-gold" onclick="APP.addSubAdmin()">Add Sub Admin</button>${subs.map((s,i)=>`<div class="card" style="padding:8px;margin-top:4px;font-size:0.7rem;">${s.email} (Perms: ${Object.entries(s.permissions).filter(([k,v])=>v).map(([k])=>k).join(', ')||'none'})<button class="btn btn-sm btn-blue" onclick="APP.editSubAdmin(${i})">✏️ Edit</button><button class="btn btn-sm btn-danger" onclick="APP.removeSubAdmin(${i})">🗑</button></div>`).join('')}<button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function addSubAdmin() {
+                const email = document.getElementById('subAdminEmail')?.value.trim();
+                const pass = document.getElementById('subAdminPass')?.value;
+                if (!email || !pass) return showToast('Fill all fields!');
+                let subs = STORE.get('subAdmins');
+                if (subs.find(s => s.email === email)) return showToast('Sub admin exists!');
+                const perms = {
+                    users: document.getElementById('permUsers')?.checked || false,
+                    fee: document.getElementById('permFee')?.checked || false,
+                    withdraw: document.getElementById('permWithdraw')?.checked || false,
+                    tasks: document.getElementById('permTasks')?.checked || false,
+                    special: document.getElementById('permSpecial')?.checked || false,
+                    notifications: document.getElementById('permNotifications')?.checked || false,
+                    support: document.getElementById('permSupport')?.checked || false,
+                    docs: document.getElementById('permDocs')?.checked || false,
+                    paymentConfig: document.getElementById('permPaymentConfig')?.checked || false,
+                    marquee: document.getElementById('permMarquee')?.checked || false
+                };
+                subs.push({ email, password: pass, permissions: perms });
+                STORE.set('subAdmins', subs);
+                let users = STORE.get('users');
+                if (!users.find(u => u.email === email)) {
+                    users.push({
+                        id: generateID(),
+                        fullName: 'Sub Admin',
+                        email,
+                        password: pass,
+                        isAdmin: true,
+                        isApproved: true,
+                        isSpecial: false,
+                        specialEarning: null,
+                        currentBalance: 0,
+                        totalBalance: 0,
+                        perTaskEarning: 0.01,
+                        plan: null,
+                        profilePic: '',
+                        createdAt: Date.now(),
+                        refCount: 0,
+                        referredBy: null,
+                        levelBonusClaimed: {},
+                        withdrawCount: 0,
+                        isBlocked: false,
+                        isSubAdmin: true
+                    });
+                    saveUsers(users);
+                } else {
+                    const idx = users.findIndex(u => u.email === email);
+                    if (idx >= 0) { users[idx].isSubAdmin = true;
+                        users[idx].password = pass;
+                        saveUsers(users); }
+                }
+                closeModal();
+                adminSubAdmins();
+                showToast('Sub admin added!');
+            }
+
+            function editSubAdmin(idx) {
+                let subs = STORE.get('subAdmins');
+                const sub = subs[idx];
+                if (!sub) return;
+                showModal(
+                    `<h3>✏️ Edit Sub Admin</h3><p>Email: ${sub.email}</p><input id="editSubPass" type="password" placeholder="New Password (leave blank)" /><div style="font-size:0.7rem; display:grid; grid-template-columns:1fr 1fr; gap:4px;"><label><input type="checkbox" id="editPermUsers" ${sub.permissions.users?'checked':''} /> Users</label><label><input type="checkbox" id="editPermFee" ${sub.permissions.fee?'checked':''} /> Pending Fee</label><label><input type="checkbox" id="editPermWithdraw" ${sub.permissions.withdraw?'checked':''} /> Withdrawals</label><label><input type="checkbox" id="editPermTasks" ${sub.permissions.tasks?'checked':''} /> Tasks</label><label><input type="checkbox" id="editPermSpecial" ${sub.permissions.special?'checked':''} /> Special Users</label><label><input type="checkbox" id="editPermNotifications" ${sub.permissions.notifications?'checked':''} /> Notifications</label><label><input type="checkbox" id="editPermSupport" ${sub.permissions.support?'checked':''} /> Support Chat</label><label><input type="checkbox" id="editPermDocs" ${sub.permissions.docs?'checked':''} /> Company Docs</label><label><input type="checkbox" id="editPermPaymentConfig" ${sub.permissions.paymentConfig?'checked':''} /> Payment Config</label><label><input type="checkbox" id="editPermMarquee" ${sub.permissions.marquee?'checked':''} /> Marquee</label></div><button class="btn btn-gold" onclick="APP.saveEditSubAdmin(${idx})">Save</button><button class="btn btn-outline btn-sm" onclick="APP.adminSubAdmins()">Cancel</button>`
+                );
+            }
+
+            function saveEditSubAdmin(idx) {
+                let subs = STORE.get('subAdmins');
+                const sub = subs[idx];
+                if (!sub) return;
+                const newPass = document.getElementById('editSubPass')?.value;
+                sub.permissions = {
+                    users: document.getElementById('editPermUsers')?.checked || false,
+                    fee: document.getElementById('editPermFee')?.checked || false,
+                    withdraw: document.getElementById('editPermWithdraw')?.checked || false,
+                    tasks: document.getElementById('editPermTasks')?.checked || false,
+                    special: document.getElementById('editPermSpecial')?.checked || false,
+                    notifications: document.getElementById('editPermNotifications')?.checked || false,
+                    support: document.getElementById('editPermSupport')?.checked || false,
+                    docs: document.getElementById('editPermDocs')?.checked || false,
+                    paymentConfig: document.getElementById('editPermPaymentConfig')?.checked || false,
+                    marquee: document.getElementById('editPermMarquee')?.checked || false
+                };
+                if (newPass) sub.password = newPass;
+                subs[idx] = sub;
+                STORE.set('subAdmins', subs);
+                let users = STORE.get('users');
+                const uIdx = users.findIndex(u => u.email === sub.email);
+                if (uIdx >= 0) { users[uIdx].password = newPass || users[uIdx].password;
+                    saveUsers(users); }
+                closeModal();
+                adminSubAdmins();
+                showToast('Sub admin updated!');
+            }
+
+            function removeSubAdmin(idx) {
+                let subs = STORE.get('subAdmins');
+                const sub = subs[idx];
+                subs.splice(idx, 1);
+                STORE.set('subAdmins', subs);
+                if (sub) {
+                    let users = STORE.get('users');
+                    const uIdx = users.findIndex(u => u.email === sub.email);
+                    if (uIdx >= 0) { users[uIdx].isSubAdmin = false;
+                        saveUsers(users); }
+                }
+                closeModal();
+                adminSubAdmins();
+            }
+
+            function adminPaymentConfig() {
+                const config = STORE.get('paymentConfig');
+                const methods = config.withdrawalMethods || ['JazzCash', 'EasyPaisa', 'Upaisa'];
+                showModal(
+                    `<h3>⚙️ Payment Configuration</h3>
+                    <label>Base Domain:</label><input id="cfgBaseDomain" value="${config.baseDomain || 'elitenation.app'}" placeholder="example.com" />
+                    <label>JazzCash Number:</label><input id="cfgJazzNum" value="${config.jazzcashNumber}" />
+                    <label>Account Title:</label><input id="cfgJazzTitle" value="${config.jazzcashTitle}" />
+                    <label>USDT ERC20:</label><input id="cfgUsdt" value="${config.usdtAddress}" />
+                    <label>USDC ERC20:</label><input id="cfgUsdc" value="${config.usdcAddress}" />
+                    <label>Crypto Fee (USD):</label><input id="cfgCryptoFee" type="number" value="${config.cryptoFeeUSD}" />
+                    <label>Withdrawal Methods (comma separated):</label><input id="cfgWithdrawMethods" value="${methods.join(', ')}" />
+                    <label><input type="checkbox" id="cfgCryptoWithdraw" ${config.enableCryptoWithdraw?'checked':''} /> Enable Crypto Withdrawal</label>
+                    <button class="btn btn-gold" onclick="APP.savePaymentConfig()">Save</button>
+                    <button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function savePaymentConfig() {
+                let config = STORE.get('paymentConfig');
+                config.baseDomain = document.getElementById('cfgBaseDomain')?.value.trim() || 'elitenation.app';
+                config.jazzcashNumber = document.getElementById('cfgJazzNum')?.value || config.jazzcashNumber;
+                config.jazzcashTitle = document.getElementById('cfgJazzTitle')?.value || config.jazzcashTitle;
+                config.usdtAddress = document.getElementById('cfgUsdt')?.value || config.usdtAddress;
+                config.usdcAddress = document.getElementById('cfgUsdc')?.value || config.usdcAddress;
+                config.cryptoFeeUSD = parseFloat(document.getElementById('cfgCryptoFee')?.value) || config.cryptoFeeUSD;
+                const methodsStr = document.getElementById('cfgWithdrawMethods')?.value || 'JazzCash, EasyPaisa, Upaisa';
+                config.withdrawalMethods = methodsStr.split(',').map(m => m.trim()).filter(m => m);
+                config.enableCryptoWithdraw = document.getElementById('cfgCryptoWithdraw')?.checked || false;
+                STORE.set('paymentConfig', config);
+                showToast('Configuration saved!');
+                closeModal();
+            }
+
+            function adminMarquee() {
+                const text = STORE.get('marqueeText') || '';
+                showModal(
+                    `<h3>📢 Edit Marquee</h3><textarea id="marqueeInput">${text}</textarea><button class="btn btn-gold" onclick="APP.saveMarquee()">Save</button><button class="btn btn-outline btn-sm" onclick="APP.closeModal()">Close</button>`
+                );
+            }
+
+            function saveMarquee() {
+                const text = document.getElementById('marqueeInput')?.value || '';
+                STORE.set('marqueeText', text);
+                showToast('Marquee updated!');
+                closeModal();
+            }
+
+            // ── Theme toggle ──
+            function toggleTheme() {
+                ThemeManager.toggle();
+                _refreshScreen();
+            }
+
+            // ── Refresh current screen ──
+            function _refreshScreen() {
+                const user = getCurrentUser();
+                if (!user) return screenLogin();
+                if (user.isAdmin && !user.isSubAdmin) screenAdminDashboard();
+                else if (user.isSubAdmin) screenSubAdminDashboard();
+                else if (!user.isApproved) {
+                    const pendingFee = STORE.get('pendingFee');
+                    if (pendingFee.find(p => p.userId === user.id)) screenPendingApproval();
+                    else screenPaymentForm();
+                } else if (user.isBlocked) screenUserDashboard();
+                else screenUserDashboard();
+            }
+
+            // ── Init ──
+            function init() {
+                // Check for referral in URL before anything else
+                parseReferralFromURL();
+
+                // Load local data and set up Firebase listener (non-blocking)
+                DataManager.init();
+
+                // Initialize default data if needed
+                initData();
+
+                // Theme
+                ThemeManager.init();
+
+                // React to Firebase updates
+                DataManager.onChange((data) => {
+                    const user = getCurrentUser();
+                    if (user && user.isApproved && !user.isAdmin && !user.isSubAdmin) {
+                        const activeScreen = container.querySelector('.screen.active');
+                        if (activeScreen && activeScreen.querySelector('.dashboard-header')) {
+                            screenUserDashboard();
+                        }
+                    }
+                });
+
+                // Determine which screen to show based on current user
+                const uid = STORE.get('currentUserId');
+                if (uid) {
+                    const user = findUserById(uid);
+                    if (user) {
+                        if (user.isAdmin && !user.isSubAdmin) screenAdminDashboard();
+                        else if (user.isSubAdmin) screenSubAdminDashboard();
+                        else if (!user.isApproved) {
+                            const pendingFee = STORE.get('pendingFee');
+                            if (pendingFee.find(p => p.userId === user.id)) screenPendingApproval();
+                            else screenPaymentForm();
+                        } else if (user.isBlocked) screenUserDashboard();
+                        else screenUserDashboard();
+                    } else screenLogin();
+                } else {
+                    // If referral code exists, show registration with it pre-filled
+                    if (_referralCode) {
+                        screenRegister();
+                    } else {
+                        screenLogin();
+                    }
+                }
+
+                if (firebaseReady) {
+                    console.log('✅ Firebase connected & synced (Elite Nation v2)');
+                } else {
+                    console.log('📁 Using localStorage (offline mode)');
+                }
+            }
+
+            // ── Expose ──
+            return {
+                screenRegister,
+                screenLogin,
+                screenPaymentForm,
+                screenPendingApproval,
+                screenUserDashboard,
+                screenAdminDashboard,
+                screenSubAdminDashboard,
+                handleRegister,
+                handleLogin,
+                logout,
+                selectPlan,
+                switchPaymentTab,
+                submitPayment,
+                completeTask,
+                confirmTaskComplete,
+                openWithdraw,
+                switchWithdrawTab,
+                submitWithdraw,
+                openWithdrawHistory,
+                openTasks,
+                completeTaskFromModal,
+                openReferral,
+                openTeam,
+                viewRefTeam,
+                openLevels,
+                claimLevelBonus,
+                openProfile,
+                changeName,
+                uploadProfilePic,
+                changePassword,
+                openCustomerService,
+                sendChatMsg,
+                deleteChatMsg,
+                zoomImage,
+                openNotifications,
+                openCompanyDocs,
+                adminPendingFee,
+                approveFee,
+                rejectFee,
+                adminPendingWithdrawals,
+                approveWithdrawal,
+                rejectWithdrawal,
+                adminUsers,
+                toggleBlockUser,
+                adminTasks,
+                addTask,
+                deleteTask,
+                adminSpecial,
+                makeSpecial,
+                updateSpecialEarning,
+                removeSpecial,
+                adminNotifications,
+                adminChat,
+                adminSendChat,
+                adminProfile,
+                uploadAdminPic,
+                changeAdminPass,
+                adminCompanyDocs,
+                uploadCompanyDoc,
+                deleteCompanyDoc,
+                adminSubAdmins,
+                addSubAdmin,
+                editSubAdmin,
+                saveEditSubAdmin,
+                removeSubAdmin,
+                adminPaymentConfig,
+                savePaymentConfig,
+                adminMarquee,
+                saveMarquee,
+                toggleTheme,
+                closeModal,
+                showToastMsg,
+                _refreshScreen,
+                init,
+                _selectedPlanIdx: 0,
+                _paymentMethod: 'jazzcash',
+                _withdrawTab: 'jazzcash',
+            };
+        })();
+
+        // ── Start ──
+        document.addEventListener('DOMContentLoaded', () => {
+            APP.init();
+            window.APP = APP;
+        });
+    </script>
+</body>
+</html>
